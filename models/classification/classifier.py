@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import os
 from distutils.version import LooseVersion
 import torch
 from torch.autograd import Variable
@@ -42,7 +43,7 @@ class PatchClassifier(object):
     def __init__(self, gpu=0):
         self.gpu = gpu
 
-        ckpt = 'data/squeezenet_small40_coco_mot16_ckpt_10.h5'
+        ckpt = os.path.expanduser('~/Data/squeezenet_small40_coco_mot16_ckpt_10.h5')
         model = CLSModel(extractor='squeezenet')
 
         # from mcmtt.network.experiments.rfcn_cls2 import Model as CLSModel

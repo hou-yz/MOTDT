@@ -86,7 +86,7 @@ def eval_seq(dataloader, data_type, result_filename, save_dir=None, show_image=T
     write_results(result_filename, results, data_type)
 
 
-def main(data_root='/data/MOT16/train', det_root=None,
+def main(data_root=os.path.expanduser('~/Data/MOT16/train'), det_root=None,
          seqs=('MOT16-05',), exp_name='demo', save_image=False, show_image=True):
     logger.setLevel(logging.INFO)
     result_root = os.path.join(data_root, '..', 'results', exp_name)
@@ -126,7 +126,7 @@ def main(data_root='/data/MOT16/train', det_root=None,
     # # eval
     # try:
     #     import matlab.engine as matlab_engine
-    #     eval_root = '/data/MOT17/amilan-motchallenge-devkit'
+    #     eval_root = os.path.expanduser('~/Data/MOT17/amilan-motchallenge-devkit')
     #     seqmap = 'eval_mot_generated.txt'
     #     with open(os.path.join(eval_root, 'seqmaps', seqmap), 'w') as f:
     #         f.write('name\n')
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 MOT16-13'''
     seqs = [seq.strip() for seq in seqs_str.split()]
 
-    main(data_root='/data/MOT16/train',
+    main(data_root=os.path.expanduser('~/Data/MOT16/train'),
          seqs=seqs,
          exp_name='mot16_val',
          show_image=False)

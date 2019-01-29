@@ -14,7 +14,7 @@
 ### Usage
 
 Download MOT16 dataset and trained weights from the following links.
-Put weight files in `data`, then build and run the code. 
+Put weight files in `~/Data`, then build and run the code. 
 
 ```bash
 pip install -r requirements.txt
