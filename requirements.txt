@@ -10,3 +10,4 @@ numba
 torchvision
 fire
 motmetrics
+openpyxl
