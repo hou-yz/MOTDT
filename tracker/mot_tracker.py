@@ -2,9 +2,11 @@ import numpy as np
 from numba import jit
 from collections import OrderedDict, deque
 import itertools
+import torch
 
 from utils.nms_wrapper import nms_detections
 from utils.log import logger
+from utils.TL_model import MetricNet
 
 from tracker import matching
 from utils.kalman_filter import KalmanFilter
@@ -180,7 +182,8 @@ class STrack(BaseTrack):
 
 class OnlineTracker(object):
 
-    def __init__(self, min_cls_score=0.4, min_ap_dist=0.64, max_time_lost=30, use_tracking=True, use_refind=True):
+    def __init__(self, min_cls_score=0.4, min_ap_dist=0.64, max_time_lost=30, use_tracking=True, use_refind=True,
+                 metric_net=False):
 
         self.min_cls_score = min_cls_score
         self.min_ap_dist = min_ap_dist
@@ -188,14 +191,23 @@ class OnlineTracker(object):
 
         self.kalman_filter = KalmanFilter()
 
-        self.tracked_stracks = []   # type: list[STrack]
-        self.lost_stracks = []      # type: list[STrack]
-        self.removed_stracks = []   # type: list[STrack]
+        self.tracked_stracks = []  # type: list[STrack]
+        self.lost_stracks = []  # type: list[STrack]
+        self.removed_stracks = []  # type: list[STrack]
 
         self.use_refind = use_refind
         self.use_tracking = use_tracking
         self.classifier = PatchClassifier()
         self.reid_model = load_reid_model()
+        if metric_net:
+            self.metric_net = MetricNet(feature_dim=512, num_class=2).cuda()
+            checkpoint = torch.load('/home/houyz/Code/DeepCC/src/hyper_score/logs/MOT/metric_net_L2_75.pth.tar')
+            model_dict = checkpoint['state_dict']
+            self.metric_net.load_state_dict(model_dict)
+            self.metric_net.eval()
+            self.min_ap_dist = 0
+        else:
+            self.metric_net = None
 
         self.frame_id = 0
 
@@ -262,7 +274,8 @@ class OnlineTracker(object):
             else:
                 tracked_stracks.append(track)
 
-        dists = matching.nearest_reid_distance(tracked_stracks, detections, metric='euclidean')
+        dists = matching.nearest_reid_distance(tracked_stracks, detections,
+                                               metric='euclidean' if not self.metric_net else self.metric_net)
         dists = matching.gate_cost_matrix(self.kalman_filter, dists, tracked_stracks, detections)
         matches, u_track, u_detection = matching.linear_assignment(dists, thresh=self.min_ap_dist)
         for itracked, idet in matches:
@@ -270,7 +283,8 @@ class OnlineTracker(object):
 
         # matching for missing targets
         detections = [detections[i] for i in u_detection]
-        dists = matching.nearest_reid_distance(self.lost_stracks, detections, metric='euclidean')
+        dists = matching.nearest_reid_distance(self.lost_stracks, detections,
+                                               metric='euclidean' if not self.metric_net else self.metric_net)
         dists = matching.gate_cost_matrix(self.kalman_filter, dists, self.lost_stracks, detections)
         matches, u_lost, u_detection = matching.linear_assignment(dists, thresh=self.min_ap_dist)
         for ilost, idet in matches:

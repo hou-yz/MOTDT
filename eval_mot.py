@@ -43,7 +43,7 @@ def eval_seq(dataloader, data_type, result_filename, save_dir=None, show_image=T
     if save_dir is not None:
         mkdirs(save_dir)
 
-    tracker = OnlineTracker()
+    tracker = OnlineTracker(metric_net=True)
     timer = Timer()
     results = []
     wait_time = 1
@@ -150,6 +150,13 @@ if __name__ == '__main__':
                 MOT16-09
                 MOT16-11
                 MOT16-13'''
+    # seqs_str = '''MOT16-01
+    #             MOT16-03
+    #             MOT16-06
+    #             MOT16-07
+    #             MOT16-08
+    #             MOT16-12
+    #             MOT16-14'''
     seqs = [seq.strip() for seq in seqs_str.split()]
 
     main(data_root=os.path.expanduser('~/Data/MOT16/train'),

@@ -6,6 +6,7 @@ from sklearn.utils import linear_assignment_
 from utils.cython_bbox import bbox_ious
 from utils import kalman_filter
 from utils import visualization
+from utils.TL_metric import metric_dist
 
 
 def _indices_to_matches(cost_matrix, indices, thresh):
@@ -85,7 +86,10 @@ def nearest_reid_distance(tracks, detections, metric='cosine'):
 
     det_features = np.asarray([track.curr_feature for track in detections], dtype=np.float32)
     for i, track in enumerate(tracks):
-        cost_matrix[i, :] = np.maximum(0.0, cdist(track.features, det_features, metric).min(axis=0))
+        if isinstance(metric, str):
+            cost_matrix[i, :] = np.maximum(0.0, cdist(track.features, det_features, metric).min(axis=0))
+        else:
+            cost_matrix[i, :] = np.maximum(0.0, metric_dist(track.features, det_features, metric).min(axis=0))
 
     return cost_matrix
 
