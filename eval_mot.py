@@ -1,4 +1,5 @@
 import os
+import argparse
 import cv2
 import logging
 import motmetrics as mm
@@ -39,17 +40,17 @@ def write_results(filename, results, data_type):
     logger.info('save results to {}'.format(filename))
 
 
-def eval_seq(dataloader, data_type, result_filename, save_dir=None, show_image=True):
+def eval_seq(dataloader, data_type, result_filename, save_dir=None, show_image=True, args=None):
     if save_dir is not None:
         mkdirs(save_dir)
 
-    tracker = OnlineTracker(metric_net=True)
+    tracker = OnlineTracker(metric_net=args.metric, ide=args.ide)
     timer = Timer()
     results = []
     wait_time = 1
     for frame_id, batch in enumerate(dataloader):
         if frame_id % 20 == 0:
-            logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1./max(1e-5, timer.average_time)))
+            logger.info('Processing frame {} ({:.2f} fps)'.format(frame_id, 1. / max(1e-5, timer.average_time)))
 
         frame, det_tlwhs, det_scores, _, _ = batch
 
@@ -87,7 +88,7 @@ def eval_seq(dataloader, data_type, result_filename, save_dir=None, show_image=T
 
 
 def main(data_root=os.path.expanduser('~/Data/MOT16/train'), det_root=None,
-         seqs=('MOT16-05',), exp_name='demo', save_image=False, show_image=True):
+         seqs=('MOT16-05',), exp_name='demo', save_image=False, show_image=True, args=None):
     logger.setLevel(logging.INFO)
     result_root = os.path.join(data_root, '..', 'results', exp_name)
     mkdirs(result_root)
@@ -102,7 +103,7 @@ def main(data_root=os.path.expanduser('~/Data/MOT16/train'), det_root=None,
         loader = get_loader(data_root, det_root, seq)
         result_filename = os.path.join(result_root, '{}.txt'.format(seq))
         eval_seq(loader, data_type, result_filename,
-                 save_dir=output_dir, show_image=show_image)
+                 save_dir=output_dir, show_image=show_image, args=args)
 
         # eval
         logger.info('Evaluate seq: {}'.format(seq))
@@ -142,8 +143,9 @@ def main(data_root=os.path.expanduser('~/Data/MOT16/train'), det_root=None,
 
 
 if __name__ == '__main__':
-    # import fire
-    # fire.Fire(main)
+    parser = argparse.ArgumentParser(description="MOT Tracking")
+    parser.add_argument('--ide', action='store_true')
+    parser.add_argument('--metric', action='store_true')
 
     seqs_str = '''MOT16-02
                 MOT16-05
@@ -162,4 +164,4 @@ if __name__ == '__main__':
     main(data_root=os.path.expanduser('~/Data/MOT16/train'),
          seqs=seqs,
          exp_name='mot16_val',
-         show_image=False)
+         show_image=False, args=parser.parse_args())

@@ -9,19 +9,45 @@ from utils import bbox as bbox_utils
 from utils.log import logger
 from models import net_utils
 from models.reid.image_part_aligned import Model
+from models.reid.IDE_model import IDE_model
 
 
-def load_reid_model():
-    model = Model(n_parts=8)
-    model.inp_size = (80, 160)
-    ckpt = os.path.expanduser('~/Data/googlenet_part8_all_xavier_ckpt_56.h5')
+def load_reid_model(ide=False):
+    if not ide:
+        model = Model(n_parts=8)
+        model.inp_size = (80, 160)
+        ckpt = os.path.expanduser('~/Data/googlenet_part8_all_xavier_ckpt_56.h5')
+        net_utils.load_net(ckpt, model)
+        logger.info('Load ReID model from {}'.format(ckpt))
+        model = model.cuda()
+        model.eval()
+        return model
+    else:
+        model = IDE_model(dropout=0.5, last_stride=1)
+        model.inp_size = (128, 384)
+        path = '/home/houyz/Code/open-reid-hyz/logs/ide_new/256/duke_my_gt/train/1_fps/basis/model_best.pth.tar'
+        checkpoint = torch.load(path)
+        pretrained_dict = checkpoint['state_dict']
+        model_dict = model.state_dict()
+        # 1. filter out unnecessary keys
+        pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+        if True:
+            keys_to_del = []
+            for key in pretrained_dict.keys():
+                if 'fc' in key:
+                    keys_to_del.append(key)
+            for key in keys_to_del:
+                del pretrained_dict[key]
+            pass
+        # 2. overwrite entries in the existing state dict
+        model_dict.update(pretrained_dict)
+        # 3. load the new state dict
+        model.load_state_dict(model_dict)
 
-    net_utils.load_net(ckpt, model)
-    logger.info('Load ReID model from {}'.format(ckpt))
-
-    model = model.cuda()
-    model.eval()
-    return model
+        logger.info('Load ReID model from {}'.format(path))
+        model = model.cuda()
+        model.eval()
+        return model
 
 
 def im_preprocess(image):

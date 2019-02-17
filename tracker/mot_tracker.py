@@ -6,7 +6,7 @@ import torch
 
 from utils.nms_wrapper import nms_detections
 from utils.log import logger
-from utils.TL_model import MetricNet
+from utils.TL_metric import MetricNet
 
 from tracker import matching
 from utils.kalman_filter import KalmanFilter
@@ -183,7 +183,7 @@ class STrack(BaseTrack):
 class OnlineTracker(object):
 
     def __init__(self, min_cls_score=0.4, min_ap_dist=0.64, max_time_lost=30, use_tracking=True, use_refind=True,
-                 metric_net=False):
+                 metric_net=False, ide=False):
 
         self.min_cls_score = min_cls_score
         self.min_ap_dist = min_ap_dist
@@ -198,14 +198,17 @@ class OnlineTracker(object):
         self.use_refind = use_refind
         self.use_tracking = use_tracking
         self.classifier = PatchClassifier()
-        self.reid_model = load_reid_model()
+        self.reid_model = load_reid_model(ide=ide)
+        if ide:
+            self.min_ap_dist = 25
         if metric_net:
-            self.metric_net = MetricNet(feature_dim=512, num_class=2).cuda()
-            checkpoint = torch.load('/home/houyz/Code/DeepCC/src/hyper_score/logs/MOT/metric_net_L2_75.pth.tar')
+            self.metric_net = MetricNet(feature_dim=512 if not ide else 256, num_class=2).cuda()
+            checkpoint = torch.load(
+                '/home/houyz/Code/DeepCC/src/hyper_score/logs/1fps_train_IDE_40/GT/metric_net_L2_Inf.pth.tar')
             model_dict = checkpoint['state_dict']
             self.metric_net.load_state_dict(model_dict)
             self.metric_net.eval()
-            self.min_ap_dist = 0
+            self.min_ap_dist = 1
         else:
             self.metric_net = None
 
