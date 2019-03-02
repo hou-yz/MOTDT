@@ -145,6 +145,7 @@ def main(data_root=os.path.expanduser('~/Data/MOT16/train'), det_root=None,
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="MOT Tracking")
     parser.add_argument('--ide', action='store_true')
+    parser.add_argument('--window', type=str, default='75')
     parser.add_argument('--metric', action='store_true')
 
     seqs_str = '''MOT16-02

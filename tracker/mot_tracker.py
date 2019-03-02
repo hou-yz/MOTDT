@@ -204,7 +204,7 @@ class OnlineTracker(object):
         if metric_net:
             self.metric_net = MetricNet(feature_dim=512 if not ide else 256, num_class=2).cuda()
             checkpoint = torch.load(
-                '/home/houyz/Code/DeepCC/src/hyper_score/logs/1fps_train_IDE_40/GT/metric_net_L2_Inf.pth.tar')
+                '/home/houyz/Code/DeepCC/src/hyper_score/logs/1fps_train_IDE_40/GT/metric_net_L2_1200.pth.tar')
             model_dict = checkpoint['state_dict']
             self.metric_net.load_state_dict(model_dict)
             self.metric_net.eval()
